@@ -1,24 +1,21 @@
 """
 9-point eye-tracker calibration prototype (PsychoPy).
-
-Output: output/calibratio_targets.csv
 """
 
 from __future__ import annotations
 
 import csv
-import random 
+import random
 import sys
 import time
 from pathlib import Path
-from turtle import position
 
-from psychopy import core, event, visual 
+from psychopy import core, event, visual
 
 # Project root is one level up from calibration/
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# Configuration 
+# Configuration
 
 TARGET_DURATION_S = 1.0
 RANDOM_SEED = 42
@@ -37,7 +34,7 @@ TARGET_COLOR = [1, 1, 1]
 BACKGROUND_COLOR = [0, 0, 0]
 
 INSTRUCTIONS_TEXT = (
-    "Please focus your gaze precisely on the center of each dotas it appears.\n\n"
+    "Please focus your gaze precisely on the center of each dot as it appears.\n\n"
     "Press the SPACEBAR to begin."
 )
 
@@ -50,8 +47,8 @@ CSV_HEADERS = [
     "Target_Y_Px",
     "Screen_Width",
     "Screen_Height",
-
 ]
+
 
 def generate_grid_targets(screen_width: int, screen_height: int) -> list[dict]:
     """Build a 3×3 grid; Target_ID 1–9 in row-major order (top-left → bottom-right)."""
@@ -78,14 +75,15 @@ def generate_grid_targets(screen_width: int, screen_height: int) -> list[dict]:
 
     return targets
 
- def build_bullseye_stimuli(win: visual.Window) -> dict:
+
+def build_bullseye_stimuli(win: visual.Window) -> dict:
     dot = visual.Circle(
-        win,   
+        win,
         radius=DOT_RADIUS_PX,
         pos=(0, 0),
         fillColor=TARGET_COLOR,
         lineColor=TARGET_COLOR,
-        unit="pix",
+        units="pix",
     )
     cross_h = visual.Line(
         win,
@@ -94,7 +92,7 @@ def generate_grid_targets(screen_width: int, screen_height: int) -> list[dict]:
         pos=(0, 0),
         lineColor=TARGET_COLOR,
         lineWidth=CROSSHAIR_LINE_WIDTH_PX,
-        unit="pix",
+        units="pix",
     )
     cross_v = visual.Line(
         win,
@@ -103,7 +101,7 @@ def generate_grid_targets(screen_width: int, screen_height: int) -> list[dict]:
         pos=(0, 0),
         lineColor=TARGET_COLOR,
         lineWidth=CROSSHAIR_LINE_WIDTH_PX,
-        unit="pix",
+        units="pix",
     )
     ring = visual.Circle(
         win,
@@ -112,75 +110,81 @@ def generate_grid_targets(screen_width: int, screen_height: int) -> list[dict]:
         fillColor=None,
         lineColor=TARGET_COLOR,
         lineWidth=RING_LINE_WIDTH_PX,
-        unit="pix",
+        units="pix",
     )
     return {"dot": dot, "cross_h": cross_h, "cross_v": cross_v, "ring": ring}
 
-def set_bullseye_position(stimuli: dict, pos: tuple[float, float]) -> None:
+
+def set_bullseye_position(stimuli: dict, position: tuple[float, float]) -> None:
     for stim in stimuli.values():
-        stim.pos = position 
+        stim.pos = position
+
 
 def draw_bullseye(stimuli: dict, progress_text: visual.TextStim | None = None) -> None:
-    stimuli["dot"].draw()
+    stimuli["ring"].draw()
     stimuli["cross_h"].draw()
     stimuli["cross_v"].draw()
     stimuli["dot"].draw()
-   if progress_text is not None:
+    if progress_text is not None:
         progress_text.draw()
+
 
 def wait_for_spacebar(win: visual.Window, message: str) -> None:
     text_stim = visual.TextStim(
-    win, 
-    text=message, 
-    color=TARGET_COLOR
-    height=28,
-    wrapWidth=win.size[0] * 0.75,
-    units="pix",
+        win,
+        text=message,
+        color=TARGET_COLOR,
+        height=28,
+        wrapWidth=win.size[0] * 0.75,
+        units="pix",
     )
     event.clearEvents()
     while True:
         if "escape" in event.getKeys():
-            raise KeyboardInterrupt("Calibration aborted by user (ESC).")     
-        texrt_stim.draw()
+            raise KeyboardInterrupt("Calibration aborted by user (ESC).")
+        text_stim.draw()
         win.flip()
         if event.getKeys(keyList=["space"]):
             event.clearEvents(eventType="keyboard")
             break
 
+
 def resolve_window_size(win: visual.Window) -> tuple[int, int]:
-  """
-  Drawable Pixel dimesions for units='pix.
-  On macOS Retina, win.size is 2x the coordinate space used for drawing.
-  """
-  win.flip()
-  fb_w, fb_h = float(win.size[0]), float(win.size[1])
-  try:
-      logical_w = float(win.winHandle.screen.width)
-      logical_h = float(win.winHandle.screen.height)
-  except Exception:
-      return int(round(fb_w)), int(round(fb_h))
-  
-  if sys.platform == "darwin" and win.useRetina:
-      if abs(fb_w - logical_w * 2) < 2 and abs(fb_h - logical_h * 2) < 2:
-          return int(round(logical_w)), int(round(logical_h))
-      
+    """
+    Drawable pixel dimensions for units='pix'.
+
+    On macOS Retina, win.size is 2× the coordinate space used for drawing.
+    """
+    win.flip()
+    fb_w, fb_h = float(win.size[0]), float(win.size[1])
+    try:
+        logical_w = float(win.winHandle.screen.width)
+        logical_h = float(win.winHandle.screen.height)
+    except Exception:
+        return int(round(fb_w)), int(round(fb_h))
+
+    if sys.platform == "darwin" and win.useRetina:
+        if abs(fb_w - logical_w * 2) < 2 and abs(fb_h - logical_h * 2) < 2:
+            return int(round(logical_w)), int(round(logical_h))
+
     return int(round(fb_w)), int(round(fb_h))
+
 
 def wait_blank_interval(win: visual.Window, duration_s: float) -> None:
     if duration_s <= 0:
         return
     clock = core.Clock()
     while clock.getTime() < duration_s:
-    win.flip()
-    if "escape" in event.getKeys():
-        raise KeyboardInterrupt("Calibration aborted by user (ESC).")
+        win.flip()
+        if "escape" in event.getKeys():
+            raise KeyboardInterrupt("Calibration aborted by user (ESC).")
 
 
 def present_shrinking_bullseye(
     win: visual.Window,
     stimuli: dict,
     target: dict,
-    progress_text: visual.TextStim, 
+    progress_text: visual.TextStim,
     duration_s: float = TARGET_DURATION_S,
 ) -> float:
     ring = stimuli["ring"]
@@ -192,29 +196,31 @@ def present_shrinking_bullseye(
 
     while clock.getTime() < duration_s:
         progress = min(clock.getTime() / duration_s, 1.0)
-        ring.radius = RING_START_RADIUS_PX + ( 
-        RING_END_RADIUS_PX - RING_START_RADIUS_PX
-        )
+        ring.radius = RING_START_RADIUS_PX + (
+            RING_END_RADIUS_PX - RING_START_RADIUS_PX
+        ) * progress
         draw_bullseye(stimuli, progress_text)
         win.flip()
         if "escape" in event.getKeys():
             raise KeyboardInterrupt("Calibration aborted by user (ESC).")
-    
+
     return timestamp_start
 
+
 def save_calibration_csv(rows: list[dict], output_path: Path) -> None:
-   output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=CSV_HEADERS)
         writer.writeheader()
         writer.writerows(rows)
+
 
 def run_calibration() -> Path:
     output_path = PROJECT_ROOT / "output" / OUTPUT_FILENAME
 
     win = visual.Window(
         fullscr=True,
-        unit="pix",
+        units="pix",
         useRetina=True,
         color=BACKGROUND_COLOR,
         colorSpace="rgb",
@@ -227,7 +233,7 @@ def run_calibration() -> Path:
     try:
         screen_width, screen_height = resolve_window_size(win)
         fb_w, fb_h = int(round(win.size[0])), int(round(win.size[1]))
-        print (
+        print(
             f"Calibration display size: {screen_width} x {screen_height} px "
             f"(framebuffer {fb_w} x {fb_h})"
         )
@@ -242,22 +248,21 @@ def run_calibration() -> Path:
             units="pix",
         )
 
-
-           auto_mode = "--auto" in sys.argv 
-            if auto_mode:
-                print("Auto mode enabled: skipping instructions and using random targets.")
-                event.clearEvents(eventType="keyboard")
-            else:
-                wait_for_spacebar(win, INSTRUCTIONS_TEXT)            
+        auto_mode = "--auto" in sys.argv
+        if auto_mode:
+            print("Auto mode: skipping instructions and exit prompt.")
+            event.clearEvents(eventType="keyboard")
+        else:
+            wait_for_spacebar(win, INSTRUCTIONS_TEXT)
 
         targets = generate_grid_targets(screen_width, screen_height)
-        if len(targets) !=9:
-            raise RuntimeError(f"Expected 9 calibrationtargets, got {len(targets)}")
-        
+        if len(targets) != 9:
+            raise RuntimeError(f"Expected 9 calibration targets, got {len(targets)}")
+
         presentation_order = targets.copy()
         if RANDOM_SEED is not None:
             random.seed(RANDOM_SEED)
-              random.shuffle(presentation_order)
+        random.shuffle(presentation_order)
         print("Presentation order (Target_ID):", [t["Target_ID"] for t in presentation_order])
 
         wait_blank_interval(win, PRE_TARGET_BLANK_S)
