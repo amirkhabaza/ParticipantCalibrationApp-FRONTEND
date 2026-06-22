@@ -39,7 +39,7 @@ RANDOM_SEED = 42
 PRE_TARGET_BLANK_S = 0.3
 INTER_TARGET_BLANK_S = 0.3
 EDGE_INSET_FRACTION = 0.10
-SHOW_CIRCLES = True  # False = crosshairs only (no center dot or shrinking ring)
+SHOW_CIRCLES = False  # False = crosshairs only (no center dot or shrinking ring)
 
 DOT_RADIUS_PX = 4
 CROSSHAIR_ARM_PX = 24
@@ -47,8 +47,6 @@ CROSSHAIR_LINE_WIDTH_PX = 1
 RING_START_RADIUS_PX = 48
 RING_END_RADIUS_PX = DOT_RADIUS_PX + 2
 RING_LINE_WIDTH_PX = 2
-SHOW_CIRCLES = False  # crosshairs only
-
 
 TARGET_COLOR = [1, 1, 1]
 BACKGROUND_COLOR = [0, 0, 0]
@@ -146,6 +144,15 @@ def circles_enabled() -> bool:
     return SHOW_CIRCLES
 
 
+def unix_epoch_offset() -> float:
+    """Map PsychoPy monotonic flip times to Unix epoch seconds."""
+    return time.time() - core.getTime()
+
+
+def flip_to_unix_time(flip_time: float, epoch_offset: float) -> float:
+    return epoch_offset + flip_time
+
+
 def draw_bullseye(
     stimuli: dict,
     progress_text: visual.TextStim | None = None,
@@ -235,14 +242,16 @@ def present_shrinking_bullseye(
     duration_s: float = TARGET_DURATION_S,
     *,
     show_circles: bool = True,
-) -> float:
+    epoch_offset: float,
+) -> tuple[float, float]:
     ring = stimuli["ring"]
     set_bullseye_position(stimuli, target["pos"])
     if show_circles:
         ring.radius = RING_START_RADIUS_PX
 
     clock = core.Clock()
-    timestamp_start = time.time()
+    timestamp_start: float | None = None
+    timestamp_end: float | None = None
 
     while clock.getTime() < duration_s:
         if show_circles:
@@ -251,11 +260,20 @@ def present_shrinking_bullseye(
                 RING_END_RADIUS_PX - RING_START_RADIUS_PX
             ) * progress
         draw_bullseye(stimuli, progress_text, show_circles=show_circles)
-        win.flip()
+        flip_time = win.flip()
+        if flip_time is None:
+            flip_time = core.getTime()
+        flip_unix = flip_to_unix_time(flip_time, epoch_offset)
+        if timestamp_start is None:
+            timestamp_start = flip_unix
+        timestamp_end = flip_unix
         if "escape" in event.getKeys():
             raise KeyboardInterrupt("Calibration aborted by user (ESC).")
 
-    return timestamp_start
+    if timestamp_start is None or timestamp_end is None:
+        raise RuntimeError("Target was not displayed (no vsync flip recorded).")
+
+    return timestamp_start, timestamp_end
 
 
 def save_calibration_csv(rows: list[dict], output_path: Path) -> None:
@@ -315,14 +333,20 @@ def run_calibration() -> Path:
 
         wait_blank_interval(win, PRE_TARGET_BLANK_S)
 
+        epoch_offset = unix_epoch_offset()
+        print("Timestamps: vsync flip times converted to Unix epoch seconds")
+
         total_targets = len(presentation_order)
         for index, target in enumerate(presentation_order):
             progress_text.text = f"Calibration point {index + 1} of {total_targets}"
-            timestamp_start = present_shrinking_bullseye(
-                win, bullseye, target, progress_text, show_circles=show_circles
+            timestamp_start, timestamp_end = present_shrinking_bullseye(
+                win,
+                bullseye,
+                target,
+                progress_text,
+                show_circles=show_circles,
+                epoch_offset=epoch_offset,
             )
-            win.flip()
-            timestamp_end = time.time()
 
             rows.append(
                 {
@@ -337,7 +361,8 @@ def run_calibration() -> Path:
             )
             print(
                 f"Logged target {index + 1}/{total_targets} "
-                f"(ID={target['Target_ID']}, x={target['Target_X_Px']}, y={target['Target_Y_Px']})"
+                f"(ID={target['Target_ID']}, x={target['Target_X_Px']}, y={target['Target_Y_Px']}, "
+                f"vsync {timestamp_start:.6f}–{timestamp_end:.6f})"
             )
 
             if index < total_targets - 1:
