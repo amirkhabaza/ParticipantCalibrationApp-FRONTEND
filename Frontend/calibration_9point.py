@@ -35,13 +35,13 @@ def enable_windows_dpi_awareness() -> None:
 # Configuration
 
 TARGET_DURATION_S = 1.5  # seconds each target stays on screen (was 1.0)
-RANDOM_SEED = 42
+RANDOM_SEED = None
 PRE_TARGET_BLANK_S = 0.3
 INTER_TARGET_BLANK_S = 0.5  # blank between targets — time to find the next one
 EDGE_INSET_FRACTION = 0.10
-SHOW_CIRCLES = False  # False = crosshairs only (no center dot or shrinking ring)
+SHOW_CIRCLES = False  # False = no shrinking ring; center dot + crosshairs always shown
 
-DOT_RADIUS_PX = 5
+DOT_RADIUS_PX = 15
 CROSSHAIR_ARM_PX = 32
 CROSSHAIR_LINE_WIDTH_PX = 3  # thicker lines improve visibility on Retina/high-DPI
 RING_START_RADIUS_PX = 48
@@ -163,8 +163,7 @@ def draw_bullseye(
         stimuli["ring"].draw()
     stimuli["cross_h"].draw()
     stimuli["cross_v"].draw()
-    if show_circles:
-        stimuli["dot"].draw()
+    stimuli["dot"].draw()
     if progress_text is not None:
         progress_text.draw()
 
