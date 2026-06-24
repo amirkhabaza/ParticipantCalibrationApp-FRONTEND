@@ -49,7 +49,7 @@ RING_END_RADIUS_PX = DOT_RADIUS_PX + 2
 RING_LINE_WIDTH_PX = 2
 
 TARGET_COLOR = [1, 1, 1]       # white (PsychoPy rgb: -1..1)
-BACKGROUND_COLOR = [-1, -1, -1]  # black — [0,0,0] in rgb is mid-grey
+BACKGROUND_COLOR = [0, 0, 0]  # black — [0,0,0] in rgb is mid-grey
 
 INSTRUCTIONS_TEXT = (
     "Please focus your gaze precisely on the center of each dot as it appears.\n\n"

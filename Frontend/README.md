@@ -200,7 +200,7 @@ Edit constants at the top of `calibration_9point.py`:
 | `SHOW_CIRCLES` | `False` | `True` = dot + shrinking ring |
 | `CROSSHAIR_ARM_PX` | `32` | Half-length of each crosshair arm |
 | `CROSSHAIR_LINE_WIDTH_PX` | `3` | Crosshair stroke width (visibility on Retina) |
-| `TARGET_COLOR` / `BACKGROUND_COLOR` | `[1,1,1]` / `[-1,-1,-1]` | White on black in PsychoPy `rgb` space (−1..1, not 0..1) |
+| `TARGET_COLOR` / `BACKGROUND_COLOR` | `[0,0,0]` / `[0,0,0]` 
 
 ### CLI flags
 
