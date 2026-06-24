@@ -237,7 +237,7 @@ def present_shrinking_bullseye(
     win: visual.Window,
     stimuli: dict,
     target: dict,
-    progress_text: visual.TextStim,
+    progress_text: visual.TextStim | None,
     duration_s: float = TARGET_DURATION_S,
     *,
     show_circles: bool = True,
@@ -303,14 +303,6 @@ def run_calibration() -> Path:
         )
 
         bullseye = build_bullseye_stimuli(win)
-        progress_text = visual.TextStim(
-            win,
-            text="",
-            color=TARGET_COLOR,
-            height=22,
-            pos=(0, -(screen_height / 2.0) + 40),
-            units="pix",
-        )
 
         auto_mode = "--auto" in sys.argv
         show_circles = circles_enabled()
@@ -338,12 +330,11 @@ def run_calibration() -> Path:
 
         total_targets = len(presentation_order)
         for index, target in enumerate(presentation_order):
-            progress_text.text = f"Calibration point {index + 1} of {total_targets}"
             timestamp_start, timestamp_end = present_shrinking_bullseye(
                 win,
                 bullseye,
                 target,
-                progress_text,
+                None,
                 show_circles=show_circles,
                 epoch_offset=epoch_offset,
             )
