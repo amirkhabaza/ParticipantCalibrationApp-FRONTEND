@@ -39,7 +39,7 @@ TARGET_DURATION_S = 1.5  # seconds each target stays on screen (was 1.0)
 RANDOM_SEED = None
 PRE_TARGET_BLANK_S = 0.3
 INTER_TARGET_BLANK_S = 0.5  # blank between targets — time to find the next one
-EDGE_INSET_FRACTION = 0.10
+EDGE_INSET_FRACTION = 0.30
 SHOW_CIRCLES = False  # False = no shrinking ring; center dot + crosshairs always shown
 SCREEN_INDEX = 0      # default screen index (0 = primary, 1 = secondary, etc.)
 
